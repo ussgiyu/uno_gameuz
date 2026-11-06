@@ -317,13 +317,11 @@ function drawMine(){
  if(c&&can(c,0)){render();say("Karta tortdingiz. Mos kelsa tashlashingiz mumkin.");}
  else{say("Mos karta yoʻq — navbat oʻtdi.");render();busy=true;setTimeout(()=>{busy=false;drew=false;cur=nxt(0);next();},800);}}
 
-function bindCard(e,i){let y0=0,x0=0,dy=0,dx=0,on=false,touch=false;
- e.onpointerdown=ev=>{on=true;touch=ev.pointerType!=="mouse";y0=ev.clientY;x0=ev.clientX;dy=dx=0;e.classList.add("drag");e.setPointerCapture(ev.pointerId);};
+function bindCard(e,i){let y0=0,x0=0,dy=0,dx=0,on=false;
+ e.onpointerdown=ev=>{on=true;y0=ev.clientY;x0=ev.clientX;dy=dx=0;e.classList.add("drag");e.setPointerCapture(ev.pointerId);};
  e.onpointermove=ev=>{if(!on)return;dy=ev.clientY-y0;dx=ev.clientX-x0;if(dy<0)e.style.transform=`translateY(${dy}px)`;};
  e.onpointerup=ev=>{if(!on)return;on=false;e.classList.remove("drag");
-  if(dy<-50)tryPlay(i);
-  else if(!touch&&Math.abs(dy)<8&&Math.abs(dx)<8)tryPlay(i);
-  else if(touch&&Math.abs(dy)<8&&Math.abs(dx)<8)say("Kartani yuqoriga suring ↑");
+  if(dy<-50||(Math.abs(dy)<8&&Math.abs(dx)<8))tryPlay(i);
   e.style.transform="";};
  e.onpointercancel=()=>{on=false;e.classList.remove("drag");e.style.transform="";};}
 
