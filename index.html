@@ -224,7 +224,8 @@ function build(){const d=[];
   for(const v of "srd")d.push({c,v},{c,v});}
  for(let i=0;i<4;i++)d.push({c:"k",v:"w"},{c:"k",v:"w4"});
  for(let i=d.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[d[i],d[j]]=[d[j],d[i]];}
- return d;}
+ // Stable IDs let remote players choose the exact card they see, even when their hand is sorted locally.
+ return d.map((c,id)=>({...c,id}));}
 const nxt=(p,s=1)=>((p+dir*s)%N+N)%N;
 const topCard=()=>disc[disc.length-1];
 function draw(n,p){let last=null;
@@ -452,7 +453,7 @@ const S0=say;say=function(t){S0(t);lastMsg=t;pub();};
 const F0=finish;finish=function(p){W=p;F0(p);$('#bAgain').style.display=(NET&&!HOST)?'none':'';};
 const B0=botSay;botSay=function(i,t){if(!NET)B0(i,t);};
 const P0=play;play=function(p,i,col){
- if(NET&&!HOST){stopT();if(p===0)send({t:'play',i,col});return;}
+ if(NET&&!HOST){stopT();if(p===0)send({t:'play',id:hands[0][i]?.id,col});return;}
  if(p===0)stopT();P0(p,i,col);
  if(NET&&p>0&&!bt[p]&&hands[p].length===1&&!un[p]){draw(2,p);say(NAMES[p]+' UNO demadi — 2 karta jarima!');render();}
  if(p>0)un[p]=false;};
@@ -495,7 +496,7 @@ function onAct(a){if(!GAMEON||over||!a)return;const s=pidAt.indexOf(a.p);if(s<1)
  if(cur!==s||busy)return;
  if(a.t==='draw')drawFor(s);
  else if(a.t==='pass'){if(drew){drew=false;cur=nxt(s);say(NAMES[s]+' navbatni oʻtkazdi.');next();}}
- else if(a.t==='play'){const c=hands[s][a.i];if(c&&can(c,s)&&(c.c!=='k'||(a.col&&'rygb'.includes(a.col))))play(s,a.i,a.col);}}
+ else if(a.t==='play'){const i=Number.isInteger(a.id)?hands[s].findIndex(c=>c.id===a.id):a.i;const c=hands[s][i];if(c&&can(c,s)&&(c.c!=='k'||(a.col&&'rygb'.includes(a.col))))play(s,i,a.col);}}
 function onPlayers(){if(!GAMEON||!HOST)return;pidAt.forEach((id,s)=>{if(id&&!PL[id]){pidAt[s]=null;bt[s]=true;NAMES[s]+=' (bot)';if(cur===s&&!busy&&!over){clearTimeout(rtm);next();}}});}
 $('#bPass').onclick=()=>{if(cur!==0||!drew)return;if(NET&&!HOST){send({t:'pass'});return;}drew=false;stopT();cur=nxt(0);say('Navbatni oʻtkazdingiz.');next();};
 $('#bUno').onclick=()=>{uno=true;if(NET&&!HOST)send({t:'uno'});say('UNO! Endi kartani tashlang.');render();};
