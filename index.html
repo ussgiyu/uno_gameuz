@@ -459,11 +459,11 @@ const P0=play;play=function(p,i,col){
  if(p>0)un[p]=false;};
 const S1=start;start=function(n,t){if(n&&NET)leave();S1(n,t);};
 function viewFor(s){const r=a=>a.map((_,v)=>a[(v+s)%N]);
- return {N,TM,cur:(cur-s+N)%N,dir,color,pen,over,win:(W-s+N)%N,drew:drew&&cur===s,un:!!un[s],msg:lastMsg,deckN:deck.length,top:topCard(),names:r(NAMES),tm:r(tm),
+ return {N,TM,cur:(cur-s+N)%N,dir,color,pen,over,busy,win:(W-s+N)%N,drew:drew&&cur===s,un:!!un[s],msg:lastMsg,deckN:deck.length,top:topCard(),names:r(NAMES),tm:r(tm),
   hands:r(hands).map((h,v)=>{const p=(v+s)%N;return p===s||(TM&&tm[p]===tm[s])?h:h.map(()=>0);})};}
 function pub(){if(!NET||!HOST||!GAMEON)return;clearTimeout(pt);pt=setTimeout(()=>{pidAt.forEach((id,s)=>{if(id&&s>0)ref('views/'+id).set(JSON.stringify(viewFor(s)));});},60);}
-function applyView(v){N=v.N;TM=v.TM;cur=v.cur;dir=v.dir;color=v.color;pen=v.pen;over=v.over;drew=v.drew;uno=v.un;tm=v.tm;hands=v.hands;
- NAMES.length=0;NAMES.push(...v.names);deck=Array(v.deckN).fill(0);disc=[v.top];busy=false;
+function applyView(v){N=v.N;TM=v.TM;cur=v.cur;dir=v.dir;color=v.color;pen=v.pen;over=v.over;drew=v.drew;uno=v.un;busy=!!v.busy;tm=v.tm;hands=v.hands;
+ NAMES.length=0;NAMES.push(...v.names);deck=Array(v.deckN).fill(0);disc=[v.top];
  $('#mNet').classList.remove('on');$('#mMenu').classList.remove('on');
  if(v.over){finish(v.win);return;}
  $('#mEnd').classList.remove('on');next();if(cur!==0)say(v.msg);}
@@ -475,7 +475,7 @@ function next(){render();if(over)return;
  if(bt[cur])setTimeout(bot,1800);else armRemote();}
 function startT(){if(tmr)return;const g=gid;let used=0,last=Date.now();$('#tm').style.display='flex';
  tmr=setInterval(()=>{if(g!==gid||cur!==0||over){stopT();return;}
-  const now=Date.now(),dt=now-last;last=now;if(!document.querySelector('.modal.on:not(#mColor)'))used+=dt;
+  const now=Date.now(),dt=now-last;last=now;if(!busy&&!document.querySelector('.modal.on:not(#mColor)'))used+=dt;
   const left=Math.max(0,1e4-used);$('#tm i').style.width=left/100+'%';$('#tm b').textContent=Math.ceil(left/1000);$('#tm').classList.toggle('lo',left<4000);
   if(left<=0){stopT();$('#mColor').classList.remove('on');if(!NET||HOST)timeUp();}},200);}
 function timeUp(){stopT();clearTimeout(rtm);if(over||busy)return;const p=cur;if(bt[p])return;
@@ -491,9 +491,10 @@ function drawFor(p){
  if(c&&can(c,p)){render();say(NAMES[p]+' karta tortdi.');}
  else{say(NAMES[p]+' karta tortdi — mos yoʻq, navbat oʻtdi.');render();busy=true;setTimeout(()=>{busy=false;drew=false;cur=nxt(p);next();},900);}}
 function drawMine(){if(NET&&!HOST){if(cur===0&&!over)send({t:'draw'});return;}drawFor(0);}
-function onAct(a){if(!GAMEON||over||!a)return;const s=pidAt.indexOf(a.p);if(s<1)return;
+function onAct(a,wait=0){if(!GAMEON||over||!a)return;const s=pidAt.indexOf(a.p);if(s<1)return;
  if(a.t==='uno'){un[s]=true;return;}
- if(cur!==s||busy)return;
+ if(cur!==s)return;
+ if(busy){if(wait<30)setTimeout(()=>onAct(a,wait+1),100);return;}
  if(a.t==='draw')drawFor(s);
  else if(a.t==='pass'){if(drew){drew=false;cur=nxt(s);say(NAMES[s]+' navbatni oʻtkazdi.');next();}}
  else if(a.t==='play'){const i=Number.isInteger(a.id)?hands[s].findIndex(c=>c.id===a.id):a.i;const c=hands[s][i];if(c&&can(c,s)&&(c.c!=='k'||(a.col&&'rygb'.includes(a.col))))play(s,i,a.col);}}
